@@ -1522,6 +1522,43 @@ SDL_CreateWindowFrom(const void *data)
     return window;
 }
 
+SDL_CreateOpenGLWindowFrom(const void *data)
+{
+    SDL_Window *window;
+
+    if (!_this) {
+        SDL_UninitializedVideo();
+        return NULL;
+    }
+    if (!_this->CreateOpenGLWindowFrom) {
+        SDL_Unsupported();
+        return NULL;
+    }
+    window = (SDL_Window *)SDL_calloc(1, sizeof(*window));
+    if (!window) {
+        SDL_OutOfMemory();
+        return NULL;
+    }
+    window->magic = &_this->window_magic;
+    window->id = _this->next_object_id++;
+    window->flags = SDL_WINDOW_FOREIGN | SDL_WINDOW_OPENGL;
+    window->last_fullscreen_flags = window->flags;
+    window->is_destroying = SDL_FALSE;
+    window->opacity = 1.0f;
+    window->brightness = 1.0f;
+    window->next = _this->windows;
+    if (_this->windows) {
+        _this->windows->prev = window;
+    }
+    _this->windows = window;
+
+    if (_this->CreateOpenGLWindowFrom(_this, window, data) < 0) {
+        SDL_DestroyWindow(window);
+        return NULL;
+    }
+    return window;
+}
+
 int
 SDL_RecreateWindow(SDL_Window * window, Uint32 flags)
 {
